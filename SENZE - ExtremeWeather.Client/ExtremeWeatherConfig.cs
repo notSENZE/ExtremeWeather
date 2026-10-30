@@ -102,23 +102,23 @@ internal sealed class ExtremeWeatherConfig
             "Increases Tarkov's native rain density and ground splashes.");
         ExtraSnowVisuals = BindRange(config, "10 - Storm", "Extra Snow (%)", 200f, 0f, 200f,
             "Increases Tarkov's native snowstorm flakes, flake size and sideways movement.");
-        StormWindVisualBoost = BindRange(config, "10 - Storm", "Storm Wind Visuals (%)", 130, 100, 200,
+        StormWindVisualBoost = BindRange(config, "10 - Storm", "Storm Wind Visuals (%)", 160, 100, 200,
             "Scales rain angle, cloud movement and vegetation sway during an extreme storm.");
         MaximumStormBotVision = BindRange(config, "10 - Storm", "Maximum Storm Bot Vision (metres)", 70, 0, 150,
             "Caps bot vision once an extreme storm reaches maximum precipitation and fog. Set to 0 to disable.");
         LightningFrequency = BindRange(config, "10 - Storm", "Lightning Frequency (%)", 100, 50, 200,
             "Controls how often custom lightning occurs. 100% uses the tuned 8–40 second interval.");
-        LightningBrightness = BindRange(config, "10 - Storm", "Lightning Brightness (%)", 100, 50, 200,
+        LightningBrightness = BindRange(config, "10 - Storm", "Lightning Brightness (%)", 130, 50, 200,
             "Scales normal and rare strong lightning flashes together.");
         NearStrikeEnabled = config.Bind("10 - Storm", "Near Strikes Enabled", true,
             "Allows rare open-sky lightning impacts near the player.");
-        NearStrikeChance = BindRange(config, "10 - Storm", "Near Strike Chance (%)", 2f, 0f, 10f,
+        NearStrikeChance = BindRange(config, "10 - Storm", "Near Strike Chance (%)", 2.5f, 0f, 10f,
             "Chance that a lightning event becomes a near strike.");
         NearStrikeVisionEnabled = config.Bind("10 - Storm", "Near Strike Vision Effect", true,
             "Adds a short distance- and view-dependent vision washout after a near strike.");
-        NearStrikeVisionStrength = BindRange(config, "10 - Storm", "Near Strike Vision Strength (%)", 100, 25, 200,
+        NearStrikeVisionStrength = BindRange(config, "10 - Storm", "Near Strike Vision Strength (%)", 170, 25, 200,
             "Scales the brightness of the near-strike vision washout.");
-        NearStrikeVisionDuration = BindRange(config, "10 - Storm", "Near Strike Vision Duration (s)", 2.2f, 0.5f, 5f,
+        NearStrikeVisionDuration = BindRange(config, "10 - Storm", "Near Strike Vision Duration (s)", 4f, 0.5f, 5f,
             "Controls how long the near-strike vision washout takes to fade.");
         NearStrikeTinnitusEnabled = config.Bind("10 - Storm", "Near Strike Tinnitus", true,
             "Uses Tarkov's native tinnitus for exceptionally close near strikes, including when an earpiece is equipped.");
@@ -133,9 +133,9 @@ internal sealed class ExtremeWeatherConfig
             "Volume of Tarkov rain ambience.");
         SnowVolume = BindRange(config, "20 - Audio", "Snow Volume (%)", 70, 0, 100,
             "Volume of Tarkov snow ambience.");
-        WindVolume = BindRange(config, "20 - Audio", "Wind Volume (%)", 50, 0, 100,
+        WindVolume = BindRange(config, "20 - Audio", "Wind Volume (%)", 60, 0, 100,
             "Volume of Tarkov wind ambience.");
-        ThunderVolume = BindRange(config, "20 - Audio", "Thunder Volume (%)", 100, 0, 100,
+        ThunderVolume = BindRange(config, "20 - Audio", "Thunder Volume (%)", 80, 0, 100,
             "Volume of Extreme Weather thunder.");
         ThunderImpact = BindRange(config, "20 - Audio", "Thunder Impact (%)", 150, 50, 200,
             "Strength of loud thunder peaks and their supporting rumble.");

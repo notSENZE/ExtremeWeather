@@ -15,6 +15,9 @@ public sealed record ModMetadata : IModMetadata
     public string? Url { get; init; } = ModInfo.RepositoryUrl;
     public List<string>? Contributors { get; init; }
     public Dictionary<string, Range>? ModDependencies { get; init; }
-    public List<string>? Incompatibilities { get; init; }
+    public List<string>? Incompatibilities { get; init; } = new()
+    {
+        "com.killdg.returnofthunderstorms"
+    };
     public bool HasPrepatcher { get; init; }
 }
