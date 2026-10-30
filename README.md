@@ -12,7 +12,7 @@ If you experience any issues with my mods, please join my [Discord](https://disc
 **Dependencies:** None  
 **FIKA compatibility:** Unknown  
 **Recommended mod:** [Bodycam](https://github.com/notSENZE/Bodycam)  
-**Known incompatibilities:** [Time & Weather Changer NG](https://sp-mod.com/mod/2120/time-weather-changer-ng)
+**Known incompatibilities:** [Time & Weather Changer NG](https://sp-mod.com/mod/2120/time-weather-changer-ng), [Return Of Thunderstorms](https://sp-mod.com/mod/3236/return-of-thunderstorms)
 
 
 # DETAILS
