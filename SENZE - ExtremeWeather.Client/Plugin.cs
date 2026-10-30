@@ -21,7 +21,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     internal const string PluginGuid = "com.senze.extremeweather";
     internal const string PluginName = "Senze - Extreme Weather";
-    internal const string PluginVersion = "1.3.6";
+    internal const string PluginVersion = "1.3.7";
 
     internal static Plugin Instance { get; private set; }
     internal static ExtremeWeatherConfig Settings { get; private set; }
