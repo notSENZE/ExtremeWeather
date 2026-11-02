@@ -159,6 +159,7 @@ internal sealed class LightningEffects
     internal void Reset()
     {
         _pendingThunder.Clear();
+        _thunderAudio.Reset();
         _overlay.ResetEffects();
         _wasActive = false;
     }

@@ -22,7 +22,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     internal const string PluginGuid = "com.senze.extremeweather";
     internal const string PluginName = "Senze - Extreme Weather";
-    internal const string PluginVersion = "1.3.11";
+    internal const string PluginVersion = "1.3.12";
 
     internal static Plugin Instance { get; private set; }
     internal static ExtremeWeatherConfig Settings { get; private set; }
@@ -133,11 +133,12 @@ public sealed class Plugin : BaseUnityPlugin
     }
 
     internal static bool TryGetMovementSpeedMultiplier(
+        Player player,
         MovementContext movementContext,
         out float multiplier)
     {
         multiplier = 1f;
-        return Instance?._stormMovement?.TryGetSpeedMultiplier(movementContext, out multiplier) == true;
+        return Instance?._stormMovement?.TryGetSpeedMultiplier(player, movementContext, out multiplier) == true;
     }
 
     public void Awake()

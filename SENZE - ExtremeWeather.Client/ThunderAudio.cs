@@ -46,6 +46,7 @@ internal sealed class ThunderAudio
     private readonly Dictionary<string, ClipAnalysis> _clipAnalysis =
         new Dictionary<string, ClipAnalysis>(System.StringComparer.OrdinalIgnoreCase);
     private string _lastAudioPath;
+    private int _playbackGeneration;
     private bool _disposed;
     private bool _warnedAboutMissingClips;
 
@@ -75,7 +76,7 @@ internal sealed class ThunderAudio
     internal void Play(float delay, bool strong, ThunderStyle style = ThunderStyle.Random,
         Vector3? worldPosition = null, float sourceDistance = 0f)
     {
-        if (_audioFiles.Count == 0)
+        if (_disposed || _audioFiles.Count == 0)
         {
             if (!_warnedAboutMissingClips)
             {
@@ -85,12 +86,24 @@ internal sealed class ThunderAudio
             return;
         }
 
+        var playbackGeneration = _playbackGeneration;
         _coroutineHost.StartCoroutine(LoadAndPlayCoroutine(
-            delay, strong, style, worldPosition, sourceDistance));
+            delay, strong, style, worldPosition, sourceDistance, playbackGeneration));
+    }
+
+    internal void Reset()
+    {
+        _playbackGeneration++;
+        foreach (var voice in _activeVoices.ToArray())
+        {
+            ReleaseVoice(voice);
+        }
+        _activeVoices.Clear();
     }
 
     internal void Dispose()
     {
+        _playbackGeneration++;
         _disposed = true;
         foreach (var voice in _activeVoices.ToArray())
         {
@@ -102,7 +115,7 @@ internal sealed class ThunderAudio
     }
 
     private IEnumerator LoadAndPlayCoroutine(float delay, bool strong, ThunderStyle requestedStyle,
-        Vector3? worldPosition, float sourceDistance)
+        Vector3? worldPosition, float sourceDistance, int playbackGeneration)
     {
         var path = SelectAudioPath();
         var audioType = string.Equals(Path.GetExtension(path), ".wav", System.StringComparison.OrdinalIgnoreCase)
@@ -119,7 +132,7 @@ internal sealed class ThunderAudio
             }
 
             yield return request.SendWebRequest();
-            if (_disposed)
+            if (_disposed || playbackGeneration != _playbackGeneration)
             {
                 yield break;
             }
@@ -142,8 +155,9 @@ internal sealed class ThunderAudio
             {
                 analysis = new ClipAnalysis();
                 yield return AnalyzeClipCoroutine(downloadedClip, analysis);
-                if (_disposed)
+                if (_disposed || playbackGeneration != _playbackGeneration)
                 {
+                    Object.Destroy(downloadedClip);
                     yield break;
                 }
                 _clipAnalysis[path] = analysis;
@@ -235,7 +249,7 @@ internal sealed class ThunderAudio
 
             yield return null;
 
-            if (_disposed)
+            if (_disposed || playbackGeneration != _playbackGeneration)
             {
                 yield break;
             }
@@ -249,7 +263,9 @@ internal sealed class ThunderAudio
             }
 
             var startedAt = Time.unscaledTime;
-            while (!_disposed && Time.unscaledTime - startedAt < eventLength)
+            while (!_disposed
+                && playbackGeneration == _playbackGeneration
+                && Time.unscaledTime - startedAt < eventLength)
             {
                 var elapsed = Time.unscaledTime - startedAt;
                 var naturalFade = CalculateNaturalFade(elapsed, fadeStartedAt, fadeLength);

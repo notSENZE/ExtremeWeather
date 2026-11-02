@@ -10,10 +10,11 @@ internal sealed class StormMovementController
     private const float UpdateInterval = 0.25f;
 
     private readonly ManualLogSource _logger;
-    private Player _player;
+    private Player _localPlayer;
     private float _nextUpdateTime;
     private float _speedMultiplier = 1f;
-    private bool _active;
+    private bool _stormActive;
+    private bool _localPlayerOutside;
 
     internal StormMovementController(ManualLogSource logger)
     {
@@ -28,16 +29,10 @@ internal sealed class StormMovementController
         }
         _nextUpdateTime = Time.unscaledTime + UpdateInterval;
 
-        var player = Singleton<GameWorld>.Instance?.MainPlayer;
-        if (player != _player)
-        {
-            SetInactive();
-            _player = player;
-        }
+        _localPlayer = Singleton<GameWorld>.Instance?.MainPlayer;
+        _localPlayerOutside = _localPlayer != null && RainController.IsCameraUnderRain;
 
-        var shouldApply = _player != null
-            && _player.MovementContext != null
-            && RainController.IsCameraUnderRain
+        var shouldApply = _localPlayer != null
             && stormStrength > 0.001f
             && maximumResistancePercent > 0;
         if (!shouldApply)
@@ -48,38 +43,49 @@ internal sealed class StormMovementController
 
         var maximumResistance = Mathf.Clamp(maximumResistancePercent / 100f, 0f, 0.5f);
         _speedMultiplier = Mathf.Lerp(1f, 1f - maximumResistance, Mathf.Clamp01(stormStrength));
-        if (!_active)
+        if (!_stormActive)
         {
-            _active = true;
+            _stormActive = true;
             _logger.LogInfo(
-                $"Outdoor storm movement resistance activated at {(1f - _speedMultiplier) * 100f:0}%.");
+                $"Outdoor storm movement resistance activated for the player and bots at {(1f - _speedMultiplier) * 100f:0}%.");
         }
     }
 
-    internal bool TryGetSpeedMultiplier(MovementContext movementContext, out float multiplier)
+    internal bool TryGetSpeedMultiplier(Player player, MovementContext movementContext, out float multiplier)
     {
         multiplier = _speedMultiplier;
-        return _active
-            && _player != null
-            && ReferenceEquals(_player.MovementContext, movementContext)
-            && multiplier < 0.999f;
+        if (!_stormActive || player == null || multiplier >= 0.999f)
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(player, _localPlayer))
+        {
+            return _localPlayerOutside && ReferenceEquals(player.MovementContext, movementContext);
+        }
+
+        return player.IsAI
+            && player.AIData != null
+            && player.AIData.EnvironmentId == 0
+            && ReferenceEquals(player.MovementContext, movementContext);
     }
 
     internal void Reset()
     {
         SetInactive();
-        _player = null;
+        _localPlayer = null;
+        _localPlayerOutside = false;
         _nextUpdateTime = 0f;
     }
 
     private void SetInactive()
     {
-        if (_active)
+        if (_stormActive)
         {
             _logger.LogInfo("Outdoor storm movement resistance released.");
         }
 
         _speedMultiplier = 1f;
-        _active = false;
+        _stormActive = false;
     }
 }
