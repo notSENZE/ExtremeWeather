@@ -1,4 +1,5 @@
 using Comfort.Common;
+using BepInEx.Logging;
 using EFT;
 using UnityEngine;
 
@@ -7,12 +8,17 @@ namespace SenzeExtremeWeather;
 internal sealed class StormMovementController
 {
     private const float UpdateInterval = 0.25f;
-    private const Player.ESpeedLimit StormSpeedLimit = (Player.ESpeedLimit)100;
 
+    private readonly ManualLogSource _logger;
     private Player _player;
     private float _nextUpdateTime;
-    private float _lastSpeedLimit = 1f;
-    private bool _speedLimitApplied;
+    private float _speedMultiplier = 1f;
+    private bool _active;
+
+    internal StormMovementController(ManualLogSource logger)
+    {
+        _logger = logger;
+    }
 
     internal void Update(float stormStrength, int maximumResistancePercent)
     {
@@ -25,7 +31,7 @@ internal sealed class StormMovementController
         var player = Singleton<GameWorld>.Instance?.MainPlayer;
         if (player != _player)
         {
-            RemoveSpeedLimit();
+            SetInactive();
             _player = player;
         }
 
@@ -36,38 +42,44 @@ internal sealed class StormMovementController
             && maximumResistancePercent > 0;
         if (!shouldApply)
         {
-            RemoveSpeedLimit();
+            SetInactive();
             return;
         }
 
         var maximumResistance = Mathf.Clamp(maximumResistancePercent / 100f, 0f, 0.5f);
-        var speedLimit = Mathf.Lerp(1f, 1f - maximumResistance, Mathf.Clamp01(stormStrength));
-        if (_speedLimitApplied && Mathf.Abs(speedLimit - _lastSpeedLimit) < 0.005f)
+        _speedMultiplier = Mathf.Lerp(1f, 1f - maximumResistance, Mathf.Clamp01(stormStrength));
+        if (!_active)
         {
-            return;
+            _active = true;
+            _logger.LogInfo(
+                $"Outdoor storm movement resistance activated at {(1f - _speedMultiplier) * 100f:0}%.");
         }
+    }
 
-        _player.MovementContext.RemoveStateSpeedLimit(StormSpeedLimit);
-        _player.MovementContext.AddStateSpeedLimit(speedLimit, StormSpeedLimit);
-        _lastSpeedLimit = speedLimit;
-        _speedLimitApplied = true;
+    internal bool TryGetSpeedMultiplier(MovementContext movementContext, out float multiplier)
+    {
+        multiplier = _speedMultiplier;
+        return _active
+            && _player != null
+            && ReferenceEquals(_player.MovementContext, movementContext)
+            && multiplier < 0.999f;
     }
 
     internal void Reset()
     {
-        RemoveSpeedLimit();
+        SetInactive();
         _player = null;
         _nextUpdateTime = 0f;
     }
 
-    private void RemoveSpeedLimit()
+    private void SetInactive()
     {
-        if (_speedLimitApplied && _player?.MovementContext != null)
+        if (_active)
         {
-            _player.MovementContext.RemoveStateSpeedLimit(StormSpeedLimit);
+            _logger.LogInfo("Outdoor storm movement resistance released.");
         }
 
-        _lastSpeedLimit = 1f;
-        _speedLimitApplied = false;
+        _speedMultiplier = 1f;
+        _active = false;
     }
 }

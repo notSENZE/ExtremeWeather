@@ -22,7 +22,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     internal const string PluginGuid = "com.senze.extremeweather";
     internal const string PluginName = "Senze - Extreme Weather";
-    internal const string PluginVersion = "1.3.9";
+    internal const string PluginVersion = "1.3.10";
 
     internal static Plugin Instance { get; private set; }
     internal static ExtremeWeatherConfig Settings { get; private set; }
@@ -132,6 +132,14 @@ public sealed class Plugin : BaseUnityPlugin
         return true;
     }
 
+    internal static bool TryGetMovementSpeedMultiplier(
+        MovementContext movementContext,
+        out float multiplier)
+    {
+        multiplier = 1f;
+        return Instance?._stormMovement?.TryGetSpeedMultiplier(movementContext, out multiplier) == true;
+    }
+
     public void Awake()
     {
         Instance = this;
@@ -148,7 +156,7 @@ public sealed class Plugin : BaseUnityPlugin
         _weatherOverlay = gameObject.AddComponent<SevereWeatherOverlay>();
         _weatherOverlay.Initialize(Settings, Logger);
         _bodycamInterference = new BodycamInterferenceBridge(Logger);
-        _stormMovement = new StormMovementController();
+        _stormMovement = new StormMovementController(Logger);
         _lightning = new LightningEffects(
             Settings,
             _thunderAudio,
@@ -348,6 +356,8 @@ public sealed class Plugin : BaseUnityPlugin
         if (Instance != null)
         {
             Instance._movementDebugUntil = Time.unscaledTime + 30f;
+            Instance.Logger.LogInfo(
+                $"Movement-resistance debug requested for 30 seconds at {Settings.StormMovementResistance.Value}% maximum resistance; outdoor players only.");
         }
     }
 
