@@ -22,7 +22,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     internal const string PluginGuid = "com.senze.extremeweather";
     internal const string PluginName = "Senze - Extreme Weather";
-    internal const string PluginVersion = "1.3.8";
+    internal const string PluginVersion = "1.3.9";
 
     internal static Plugin Instance { get; private set; }
     internal static ExtremeWeatherConfig Settings { get; private set; }
@@ -35,12 +35,16 @@ public sealed class Plugin : BaseUnityPlugin
     private WindEnhancer _windEnhancer;
     private SevereWeatherOverlay _weatherOverlay;
     private BodycamInterferenceBridge _bodycamInterference;
+    private StormMovementController _stormMovement;
     private WeatherControlService _weatherControls;
     private WeatherControlMenu _weatherMenu;
     private bool _wasInRaid;
     private bool _extremeEffectsRequested;
     private bool _extremeActivationQueued;
     private bool _botVisionLimitLogged;
+    private float _gameplayStormStrength;
+    private float _hearingDebugUntil;
+    private float _movementDebugUntil;
 
     internal static bool TryGetMaximumStormBotVision(out float maximumDistance)
     {
@@ -70,6 +74,64 @@ public sealed class Plugin : BaseUnityPlugin
         return maximumFog || maximumPrecipitation;
     }
 
+    internal static bool TryGetBotHearingModifier(
+        IPlayer soundSource,
+        AISoundType soundType,
+        out float modifier)
+    {
+        modifier = 1f;
+        if (Instance == null || Settings == null || !Settings.Enabled.Value)
+        {
+            return false;
+        }
+
+        var strength = Instance.GetHearingEffectStrength();
+        var maximumReduction = Settings.MaximumStormBotHearingReduction.Value / 100f;
+        if (strength <= 0.001f || maximumReduction <= 0f)
+        {
+            return false;
+        }
+
+        var reduction = maximumReduction * strength;
+        if (soundSource?.AIData != null && soundSource.AIData.EnvironmentId != 0)
+        {
+            reduction *= 0.35f;
+        }
+
+        if (soundType == AISoundType.gun)
+        {
+            reduction *= 0.25f;
+        }
+        else if (soundType == AISoundType.silencedGun)
+        {
+            reduction *= 0.65f;
+        }
+
+        modifier = 1f - Mathf.Clamp(reduction, 0f, 0.9f);
+        return modifier < 0.999f;
+    }
+
+    internal static bool TryGetSainHearingModifiers(out float outdoor, out float indoor)
+    {
+        outdoor = 1f;
+        indoor = 1f;
+        if (Instance == null || Settings == null || !Settings.Enabled.Value)
+        {
+            return false;
+        }
+
+        var strength = Instance.GetHearingEffectStrength();
+        var maximumReduction = Settings.MaximumStormBotHearingReduction.Value / 100f;
+        if (strength <= 0.001f || maximumReduction <= 0f)
+        {
+            return false;
+        }
+
+        outdoor = 1f - maximumReduction * strength;
+        indoor = 1f - maximumReduction * 0.35f * strength;
+        return true;
+    }
+
     public void Awake()
     {
         Instance = this;
@@ -86,6 +148,7 @@ public sealed class Plugin : BaseUnityPlugin
         _weatherOverlay = gameObject.AddComponent<SevereWeatherOverlay>();
         _weatherOverlay.Initialize(Settings, Logger);
         _bodycamInterference = new BodycamInterferenceBridge(Logger);
+        _stormMovement = new StormMovementController();
         _lightning = new LightningEffects(
             Settings,
             _thunderAudio,
@@ -99,6 +162,7 @@ public sealed class Plugin : BaseUnityPlugin
 
         _harmony = new Harmony(PluginGuid);
         _harmony.PatchAll(typeof(Plugin).Assembly);
+        SainHearingBridge.Initialize(_harmony, Logger);
 
         var audioDirectory = Path.Combine(Path.GetDirectoryName(Info.Location) ?? BepInEx.Paths.PluginPath, "Audio");
         var lightningTextureDirectory = Path.Combine(
@@ -111,6 +175,7 @@ public sealed class Plugin : BaseUnityPlugin
 
     public void Update()
     {
+        SainHearingBridge.Update(_harmony, Logger);
         var gameWorld = Singleton<GameWorld>.Instance;
         bool inRaid = gameWorld;
         if (!_wasInRaid && inRaid)
@@ -128,9 +193,13 @@ public sealed class Plugin : BaseUnityPlugin
             _rainEnhancer.Restore();
             _snowEnhancer.Restore();
             _windEnhancer.Restore();
+            _stormMovement.Reset();
             _weatherOverlay.ResetEffects();
             _extremeEffectsRequested = false;
             _botVisionLimitLogged = false;
+            _gameplayStormStrength = 0f;
+            _hearingDebugUntil = 0f;
+            _movementDebugUntil = 0f;
         }
         _wasInRaid = inRaid;
 
@@ -186,6 +255,7 @@ public sealed class Plugin : BaseUnityPlugin
             _rainEnhancer.Restore();
             _snowEnhancer.Restore();
             _windEnhancer.Restore();
+            UpdateGameplayEffects(0f);
             return;
         }
 
@@ -260,7 +330,41 @@ public sealed class Plugin : BaseUnityPlugin
             _windEnhancer.Restore();
         }
 
+        var gameplayStrength = Mathf.InverseLerp(0.45f, 1f, windEnhancementStrength);
+        UpdateGameplayEffects(gameplayStrength);
         _lightning.Update(lightningStrength, lightningActive);
+    }
+
+    internal static void TriggerBotHearingTest()
+    {
+        if (Instance != null)
+        {
+            Instance._hearingDebugUntil = Time.unscaledTime + 30f;
+        }
+    }
+
+    internal static void TriggerMovementResistanceTest()
+    {
+        if (Instance != null)
+        {
+            Instance._movementDebugUntil = Time.unscaledTime + 30f;
+        }
+    }
+
+    private void UpdateGameplayEffects(float stormStrength)
+    {
+        _gameplayStormStrength = Mathf.Clamp01(stormStrength);
+        var movementStrength = Time.unscaledTime < _movementDebugUntil
+            ? 1f
+            : _gameplayStormStrength;
+        _stormMovement.Update(movementStrength, Settings.StormMovementResistance.Value);
+    }
+
+    private float GetHearingEffectStrength()
+    {
+        return Time.unscaledTime < _hearingDebugUntil
+            ? 1f
+            : _gameplayStormStrength;
     }
 
     internal static void ActivateExtremeEffectsNow()
@@ -335,6 +439,7 @@ public sealed class Plugin : BaseUnityPlugin
         _rainEnhancer?.Restore();
         _snowEnhancer?.Restore();
         _windEnhancer?.Restore();
+        _stormMovement?.Reset();
         _lightning?.Dispose();
         _thunderAudio?.Dispose();
         _harmony?.UnpatchSelf();

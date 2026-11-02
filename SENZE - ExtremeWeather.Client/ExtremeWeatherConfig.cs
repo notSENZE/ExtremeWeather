@@ -31,6 +31,8 @@ internal sealed class ExtremeWeatherConfig
     internal ConfigEntry<float> ExtraSnowVisuals { get; }
     internal ConfigEntry<int> StormWindVisualBoost { get; }
     internal ConfigEntry<int> MaximumStormBotVision { get; }
+    internal ConfigEntry<int> MaximumStormBotHearingReduction { get; }
+    internal ConfigEntry<int> StormMovementResistance { get; }
     internal ConfigEntry<int> LightningFrequency { get; }
     internal ConfigEntry<int> LightningBrightness { get; }
     internal ConfigEntry<bool> NearStrikeEnabled { get; }
@@ -106,6 +108,10 @@ internal sealed class ExtremeWeatherConfig
             "Scales rain angle, cloud movement and vegetation sway during an extreme storm.");
         MaximumStormBotVision = BindRange(config, "10 - Storm", "Maximum Storm Bot Vision (metres)", 70, 0, 150,
             "Caps bot vision once an extreme storm reaches maximum precipitation and fog. Set to 0 to disable.");
+        MaximumStormBotHearingReduction = BindRange(config, "10 - Storm", "Maximum Storm Bot Hearing Reduction (%)", 40, 0, 70,
+            "Reduces bot hearing during a developed storm. Footsteps are affected most; loud gunshots remain easier to hear. Set to 0 to disable.");
+        StormMovementResistance = BindRange(config, "10 - Storm", "Storm Movement Resistance (%)", 8, 0, 20,
+            "Reduces the local player's movement speed outdoors as the storm develops. Set to 0 to disable.");
         LightningFrequency = BindRange(config, "10 - Storm", "Lightning Frequency (%)", 100, 50, 200,
             "Controls how often custom lightning occurs. 100% uses the tuned 8–40 second interval.");
         LightningBrightness = BindRange(config, "10 - Storm", "Lightning Brightness (%)", 130, 50, 200,

@@ -12,7 +12,7 @@ internal sealed class WeatherControlMenu
     private readonly WeatherControlService _weatherControl;
     private readonly LightningEffects _lightningEffects;
     private readonly GUI.WindowFunction _drawWindow;
-    private Rect _windowRect = new Rect(45f, 45f, 500f, 710f);
+    private Rect _windowRect = new Rect(45f, 45f, 500f, 750f);
     private ControlledWeather _pendingWeather;
     private int _targetHour = 12;
     private int _targetMinute;
@@ -195,7 +195,7 @@ internal sealed class WeatherControlMenu
             new Rect(18f, 564f, 464f, 22f),
             $"Automatic weather: {_weatherControl.AutomaticStormStatus}");
 
-        GUI.Box(new Rect(12f, 592f, 476f, 104f), "Debug tests");
+        GUI.Box(new Rect(12f, 592f, 476f, 144f), "Debug tests");
         if (GUI.Button(new Rect(18f, 620f, 148f, 34f), "TEST VISION"))
         {
             _lightningEffects.TriggerVisionEffectNow();
@@ -213,7 +213,17 @@ internal sealed class WeatherControlMenu
                 ? "Complete near strike triggered."
                 : "No valid open-sky strike point was found.";
         }
-        GUI.Label(new Rect(18f, 662f, 464f, 22f), _debugStatus);
+        if (GUI.Button(new Rect(18f, 662f, 226f, 34f), "TEST BOT HEARING - 30S"))
+        {
+            Plugin.TriggerBotHearingTest();
+            _debugStatus = "Maximum bot-hearing reduction active for 30 seconds.";
+        }
+        if (GUI.Button(new Rect(256f, 662f, 226f, 34f), "TEST STORM DRAG - 30S"))
+        {
+            Plugin.TriggerMovementResistanceTest();
+            _debugStatus = "Maximum outdoor movement resistance active for 30 seconds.";
+        }
+        GUI.Label(new Rect(18f, 704f, 464f, 22f), _debugStatus);
     }
 
     private void ApplyPreset(ControlledWeather weather)
