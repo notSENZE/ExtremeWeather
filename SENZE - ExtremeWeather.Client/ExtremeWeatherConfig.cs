@@ -108,7 +108,7 @@ internal sealed class ExtremeWeatherConfig
             "Increases Tarkov's native rain density and ground splashes.");
         ExtraSnowVisuals = BindRange(config, "10 - Storm", "Extra Snow (%)", 200f, 0f, 200f,
             "Increases Tarkov's native snowstorm flakes, flake size and sideways movement.");
-        StormWindVisualBoost = BindRange(config, "10 - Storm", "Storm Wind Visuals (%)", 160, 100, 200,
+        StormWindVisualBoost = BindRange(config, "10 - Storm", "Storm Wind Visuals (%)", 100, 100, 200,
             "Scales rain angle, cloud movement and vegetation sway during an extreme storm.");
         StormFogDensity = BindRange(config, "10 - Storm", "Storm Fog Density (%)", 300, 100, 300,
             "Scales the rendered TOD and MBOIT fog density. 100% keeps Tarkov's native maximum fog.");
