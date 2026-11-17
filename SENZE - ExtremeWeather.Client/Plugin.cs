@@ -22,7 +22,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     internal const string PluginGuid = "com.senze.extremeweather";
     internal const string PluginName = "Senze - Extreme Weather";
-    internal const string PluginVersion = "1.3.12";
+    internal const string PluginVersion = "1.3.13";
 
     internal static Plugin Instance { get; private set; }
     internal static ExtremeWeatherConfig Settings { get; private set; }
@@ -45,6 +45,7 @@ public sealed class Plugin : BaseUnityPlugin
     private float _gameplayStormStrength;
     private float _hearingDebugUntil;
     private float _movementDebugUntil;
+    private float _fogDensityMultiplier = 1f;
 
     internal static bool TryGetMaximumStormBotVision(out float maximumDistance)
     {
@@ -141,6 +142,14 @@ public sealed class Plugin : BaseUnityPlugin
         return Instance?._stormMovement?.TryGetSpeedMultiplier(player, movementContext, out multiplier) == true;
     }
 
+    internal static bool TryGetFogDensityMultiplier(out float multiplier)
+    {
+        multiplier = Instance?._fogDensityMultiplier ?? 1f;
+        return Settings != null
+            && Settings.Enabled.Value
+            && multiplier > 1.001f;
+    }
+
     public void Awake()
     {
         Instance = this;
@@ -209,6 +218,7 @@ public sealed class Plugin : BaseUnityPlugin
             _gameplayStormStrength = 0f;
             _hearingDebugUntil = 0f;
             _movementDebugUntil = 0f;
+            _fogDensityMultiplier = 1f;
         }
         _wasInRaid = inRaid;
 
@@ -226,8 +236,15 @@ public sealed class Plugin : BaseUnityPlugin
             }
         }
 
+        if (!Settings.DebugMenuEnabled.Value && _weatherMenu.IsVisible)
+        {
+            _weatherMenu.SetVisible(false);
+        }
+
         var shortcut = Settings.MenuToggleKey.Value;
-        if (shortcut.MainKey != KeyCode.None && shortcut.IsDown())
+        if (Settings.DebugMenuEnabled.Value
+            && shortcut.MainKey != KeyCode.None
+            && shortcut.IsDown())
         {
             Logger.LogInfo($"Menu key detected: {shortcut.MainKey}.");
             if (!inRaid)
@@ -264,6 +281,7 @@ public sealed class Plugin : BaseUnityPlugin
             _rainEnhancer.Restore();
             _snowEnhancer.Restore();
             _windEnhancer.Restore();
+            _fogDensityMultiplier = 1f;
             UpdateGameplayEffects(0f);
             return;
         }
@@ -339,6 +357,14 @@ public sealed class Plugin : BaseUnityPlugin
             _windEnhancer.Restore();
         }
 
+        var fogStrength = controlledWeather
+            ? Mathf.Clamp01(debug.Fog / 0.35f)
+            : 0f;
+        _fogDensityMultiplier = Mathf.Lerp(
+            1f,
+            Settings.StormFogDensity.Value / 100f,
+            fogStrength);
+
         var gameplayStrength = Mathf.InverseLerp(0.45f, 1f, windEnhancementStrength);
         UpdateGameplayEffects(gameplayStrength);
         _lightning.Update(lightningStrength, lightningActive);
@@ -358,7 +384,7 @@ public sealed class Plugin : BaseUnityPlugin
         {
             Instance._movementDebugUntil = Time.unscaledTime + 30f;
             Instance.Logger.LogInfo(
-                $"Movement-resistance debug requested for 30 seconds at {Settings.StormMovementResistance.Value}% maximum resistance; outdoor players only.");
+                $"Movement-resistance debug requested for 30 seconds at {Settings.StormMovementResistance.Value}% maximum resistance; outdoors only.");
         }
     }
 

@@ -24,12 +24,14 @@ internal sealed class TunedValue<T>
 internal sealed class ExtremeWeatherConfig
 {
     internal ConfigEntry<bool> Enabled { get; }
+    internal ConfigEntry<bool> DebugMenuEnabled { get; }
     internal ConfigEntry<KeyboardShortcut> MenuToggleKey { get; }
     internal ConfigEntry<bool> AutomaticStormsEnabled { get; }
     internal ConfigEntry<float> AutomaticStormChance { get; }
     internal ConfigEntry<float> ExtraRainVisuals { get; }
     internal ConfigEntry<float> ExtraSnowVisuals { get; }
     internal ConfigEntry<int> StormWindVisualBoost { get; }
+    internal ConfigEntry<int> StormFogDensity { get; }
     internal ConfigEntry<int> MaximumStormBotVision { get; }
     internal ConfigEntry<int> MaximumStormBotHearingReduction { get; }
     internal ConfigEntry<int> StormMovementResistance { get; }
@@ -93,6 +95,8 @@ internal sealed class ExtremeWeatherConfig
     {
         Enabled = config.Bind("00 - General", "Enabled", true,
             "Enables Extreme Weather.");
+        DebugMenuEnabled = config.Bind("00 - General", "Debug Menu Enabled", true,
+            "Allows the in-raid time, weather and debug panel to be opened with the configured menu key.");
         MenuToggleKey = config.Bind("00 - General", "Menu Toggle Key", new KeyboardShortcut(KeyCode.UpArrow),
             "Opens or closes the in-raid time and weather panel.");
 
@@ -106,12 +110,14 @@ internal sealed class ExtremeWeatherConfig
             "Increases Tarkov's native snowstorm flakes, flake size and sideways movement.");
         StormWindVisualBoost = BindRange(config, "10 - Storm", "Storm Wind Visuals (%)", 160, 100, 200,
             "Scales rain angle, cloud movement and vegetation sway during an extreme storm.");
+        StormFogDensity = BindRange(config, "10 - Storm", "Storm Fog Density (%)", 220, 100, 300,
+            "Scales the rendered TOD and MBOIT fog density. 100% keeps Tarkov's native maximum fog.");
         MaximumStormBotVision = BindRange(config, "10 - Storm", "Maximum Storm Bot Vision (metres)", 70, 0, 150,
             "Caps bot vision once an extreme storm reaches maximum precipitation and fog. Set to 0 to disable.");
         MaximumStormBotHearingReduction = BindRange(config, "10 - Storm", "Maximum Storm Bot Hearing Reduction (%)", 40, 0, 70,
             "Reduces bot hearing during a developed storm. Footsteps are affected most; loud gunshots remain easier to hear. Set to 0 to disable.");
         StormMovementResistance = BindRange(config, "10 - Storm", "Storm Movement Resistance (%)", 20, 20, 50,
-            "Reduces the local player's walking and sprinting speed outdoors as the storm develops.");
+            "Reduces outdoor walking and sprinting speed for the local player and bots as the storm develops.");
         LightningFrequency = BindRange(config, "10 - Storm", "Lightning Frequency (%)", 100, 50, 200,
             "Controls how often custom lightning occurs. 100% uses the tuned 8–40 second interval.");
         LightningBrightness = BindRange(config, "10 - Storm", "Lightning Brightness (%)", 130, 50, 200,

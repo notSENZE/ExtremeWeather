@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace SenzeExtremeWeather;
 
-[HarmonyPatch(typeof(MovementContext), nameof(MovementContext.ClampSpeed))]
+[HarmonyPatch(typeof(MovementContext), nameof(MovementContext.SmoothedCharacterMovementSpeed), MethodType.Getter)]
 internal static class WalkingSpeedPatch
 {
     private static readonly AccessTools.FieldRef<MovementContext, Player> PlayerField =
