@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace SenzeExtremeWeather;
 
-[HarmonyPatch(typeof(MovementContext), nameof(MovementContext.SmoothedCharacterMovementSpeed), MethodType.Getter)]
+[HarmonyPatch(typeof(MovementContext), nameof(MovementContext.ClampSpeed))]
 internal static class WalkingSpeedPatch
 {
     private static readonly AccessTools.FieldRef<MovementContext, Player> PlayerField =
@@ -19,7 +19,7 @@ internal static class WalkingSpeedPatch
     }
 }
 
-[HarmonyPatch(typeof(MovementContext), nameof(MovementContext.StateSprintSpeedLimit), MethodType.Getter)]
+[HarmonyPatch(typeof(MovementContext), nameof(MovementContext.SprintingSpeed), MethodType.Getter)]
 internal static class SprintSpeedPatch
 {
     private static readonly AccessTools.FieldRef<MovementContext, Player> PlayerField =
@@ -31,6 +31,23 @@ internal static class SprintSpeedPatch
         if (Plugin.TryGetMovementSpeedMultiplier(PlayerField(__instance), __instance, out var multiplier))
         {
             __result *= multiplier;
+        }
+    }
+}
+
+[HarmonyPatch(typeof(MovementContext), nameof(MovementContext.EnableSprint))]
+internal static class SprintExitSpeedRefreshPatch
+{
+    private static readonly AccessTools.FieldRef<MovementContext, Player> PlayerField =
+        AccessTools.FieldRefAccess<MovementContext, Player>("_player");
+
+    [HarmonyPostfix]
+    private static void Postfix(MovementContext __instance, bool __0)
+    {
+        if (!__0
+            && Plugin.ShouldRefreshMovementSpeed(PlayerField(__instance), __instance))
+        {
+            __instance.SetCharacterMovementSpeed(__instance.CharacterMovementSpeed, true);
         }
     }
 }

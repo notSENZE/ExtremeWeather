@@ -29,8 +29,13 @@ internal sealed class StormMovementController
         }
         _nextUpdateTime = Time.unscaledTime + UpdateInterval;
 
+        var previousPlayer = _localPlayer;
+        var previousOutside = _localPlayerOutside;
+        var previousMultiplier = _speedMultiplier;
+        var wasActive = _stormActive;
+
         _localPlayer = Singleton<GameWorld>.Instance?.MainPlayer;
-        _localPlayerOutside = _localPlayer != null && RainController.IsCameraUnderRain;
+        _localPlayerOutside = IsOutside(_localPlayer);
 
         var shouldApply = _localPlayer != null
             && stormStrength > 0.001f
@@ -38,6 +43,10 @@ internal sealed class StormMovementController
         if (!shouldApply)
         {
             SetInactive();
+            if (wasActive)
+            {
+                RefreshLocalWalkingSpeed();
+            }
             return;
         }
 
@@ -48,6 +57,14 @@ internal sealed class StormMovementController
             _stormActive = true;
             _logger.LogInfo(
                 $"Outdoor storm movement resistance activated for the player and bots at {(1f - _speedMultiplier) * 100f:0}%.");
+        }
+
+        if (!ReferenceEquals(previousPlayer, _localPlayer)
+            || previousOutside != _localPlayerOutside
+            || !wasActive
+            || Mathf.Abs(previousMultiplier - _speedMultiplier) >= 0.005f)
+        {
+            RefreshLocalWalkingSpeed();
         }
     }
 
@@ -70,6 +87,13 @@ internal sealed class StormMovementController
             && ReferenceEquals(player.MovementContext, movementContext);
     }
 
+    internal bool ShouldRefreshSpeed(Player player, MovementContext movementContext)
+    {
+        return _stormActive
+            && player != null
+            && ReferenceEquals(player.MovementContext, movementContext);
+    }
+
     internal void Reset()
     {
         SetInactive();
@@ -87,5 +111,28 @@ internal sealed class StormMovementController
 
         _speedMultiplier = 1f;
         _stormActive = false;
+    }
+
+    private void RefreshLocalWalkingSpeed()
+    {
+        if (_localPlayer?.MovementContext == null || _localPlayer.Physical.Sprinting)
+        {
+            return;
+        }
+
+        var movementContext = _localPlayer.MovementContext;
+        movementContext.SetCharacterMovementSpeed(movementContext.CharacterMovementSpeed, true);
+    }
+
+    private static bool IsOutside(Player player)
+    {
+        if (player == null)
+        {
+            return false;
+        }
+
+        return player.AIData != null
+            ? player.AIData.EnvironmentId == 0
+            : RainController.IsCameraUnderRain;
     }
 }
