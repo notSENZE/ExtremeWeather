@@ -22,7 +22,7 @@ Press the `Up Arrow` key during a raid to open the mod's control panel. From the
 Lightning can occasionally strike near the player. A nearby strike may temporarily impair your vision and cause tinnitus.  
 At maximum storm intensity, bot visibility is limited to 70 metres by default. This distance can be adjusted through the `F12` configuration menu. Please note that this does not affect bot hearing or erase information about targets they have already detected.
 
-**Bodycam Compatibility**
+**Bodycam Compatibility**  
 If you also have my [Bodycam](https://github.com/notSENZE/Bodycam) mod installed, powerful lightning events and nearby strikes can cause electrical interference.
 Bodycam version **1.1.0 or later** is required for this feature.
 
